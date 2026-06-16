@@ -1,0 +1,14 @@
+[project]
+name = "ai-jobs"
+version = "0.1.0"
+description = "AI and Data Science job market (2020-2026)"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.2",
+    "pyarrow>=16",
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+    "plotly>=5.22",
+    "streamlit>=1.36",
+    "kagglehub>=0.3",
+]
