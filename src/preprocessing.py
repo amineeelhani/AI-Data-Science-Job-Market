@@ -52,3 +52,7 @@ df["n_skills"] = df[SKILL_COLS].sum(axis=1)
 def wmean(g: pd.DataFrame, col: str = "salary") -> float:
     """Weighted mean by job_openings: each row counts as 1-9 positions"""
     return (g[col] * g["job_openings"]).sum() / g["job_openings"].sum()
+
+OUT.mkdir(parents=True, exist_ok=True)
+df.to_parquet(OUT / "jobs_clean.parquet", index=False)
+print("saved:", OUT / "jobs_clean.parquet", df.shape)
