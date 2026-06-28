@@ -51,3 +51,35 @@ for ax, col, title in [(axes[0], "postings", "Posting rows per year"),
     ax.set_yticks([])
 fig.savefig(FIGDIR / "fig01_volume_per_year.png") 
 plt.close(fig)
+
+#Figure 2: Role market share over time
+t = (df.groupby(["job_posting_year", "job_title"], observed=True)["job_openings"]
+       .sum().reset_index(name="openings"))
+t["share"] = t["openings"] / t.groupby("job_posting_year")["openings"].transform("sum") * 100 #the same value for every row (year)
+pivot = t.pivot(index="job_posting_year", columns="job_title", values="share")
+fig, ax = plt.subplots(figsize=(7.5, 3.6))
+for role, color in ROLE_COLORS.items():
+    ax.plot(pivot.index, pivot[role], "o-", label=role, color=color,
+            linewidth=1.4, markersize=3)
+ax.set_title("Share of advertised openings by job title, 2020-2026")
+ax.set_ylabel("% of yearly openings")
+ax.set_ylim(0, 25)
+ax.legend( fontsize=7.5, ncol=2)
+fig.savefig(FIGDIR / "fig02_temporal_shares.png") 
+plt.close(fig)
+
+#Figure 3: Salary distribution and boxplot by role
+fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))
+axes[0].hist(df["salary"] / 1000, bins=40, color=NEUTRAL)
+axes[0].set_title("Salary distribution (all postings)")
+axes[0].set_xlabel("Annual salary (k USD)")
+axes[0].set_ylabel("Postings")
+order = df.groupby("job_title", observed=True)["salary"].median().sort_values(ascending=False).index
+sns.boxplot(data=df.assign(salary_k=df["salary"] / 1000),
+            x="salary_k", y="job_title", order=order, hue="job_title",
+            palette=ROLE_COLORS, legend=False, fliersize=1, linewidth=0.8, ax=axes[1])
+axes[1].set_title("Salary by job title")
+axes[1].set_xlabel("Annual salary (k USD)")
+axes[1].set_ylabel("")
+fig.savefig(FIGDIR / "fig03_salary_distribution.png") 
+plt.close(fig)
