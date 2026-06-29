@@ -106,3 +106,38 @@ ax.set_title("Salary spread across the levels of each variable (k USD)")
 ax.set_xlabel("max(group mean) − min(group mean), k USD")
 fig.savefig(FIGDIR / "fig04_salary_drivers.png")
 plt.close(fig)
+
+#Figure 5: Skill vs Seniority Heatmap
+levels = ["Entry", "Mid", "Senior"]
+matrix = pd.DataFrame(index=list(SKILL_COLS.values()), columns=levels, dtype=float)
+for col, label in SKILL_COLS.items():
+    for lvl in levels:
+        sub = df[(df[col] == 1) & (df["experience_level"] == lvl)]
+        matrix.loc[label, lvl] = wmean(sub) / 1000
+
+fig, ax = plt.subplots(figsize=(6, 3.6))
+sns.heatmap(matrix, annot=True, fmt=".0f", cmap="YlOrBr",
+            cbar_kws={"label": "Mean salary (k USD)"}, linewidths=0.5,
+            linecolor="white", ax=ax)
+ax.set_title("Mean salary by skill and seniority (weighted)")
+fig.savefig(FIGDIR / "fig05_skill_seniority.png")
+plt.close(fig)
+
+#Figure 6: Skill salary premium
+lift = []
+for col, label in SKILL_COLS.items():
+    have = wmean(df[df[col] == 1])
+    miss = wmean(df[df[col] == 0])
+    lift.append({"skill": label, "lift": (have - miss) / 1000})
+lift = pd.DataFrame(lift).sort_values("lift")
+
+fig, ax = plt.subplots(figsize=(6.5, 3.2)) 
+colors = [ACCENT if v > 1 else NEUTRAL for v in lift["lift"]]
+ax.barh(lift["skill"], lift["lift"], color=colors)
+ax.axvline(0, color="black", linewidth=0.8)
+ax.bar_label(ax.containers[0], fmt="{:+,.1f}", fontsize=8, padding=3)
+ax.set_xlim(lift["lift"].min() - 3, lift["lift"].max() * 1.15)
+ax.set_title("Salary premium for having each skill (weighted)")
+ax.set_xlabel("Mean salary difference: has skill − lacks skill (k USD)")
+fig.savefig(FIGDIR / "fig06_skill_premium.png")
+plt.close(fig)
