@@ -141,3 +141,47 @@ ax.set_title("Salary premium for having each skill (weighted)")
 ax.set_xlabel("Mean salary difference: has skill − lacks skill (k USD)")
 fig.savefig(FIGDIR / "fig06_skill_premium.png")
 plt.close(fig)
+
+#Figure 7: Geography
+geo = (df.groupby("country", observed=True)
+         .apply(lambda g: pd.Series({
+             "openings": g["job_openings"].sum(),
+             "salary_k": wmean(g) / 1000}))
+         .sort_values("salary_k"))
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4.2), sharey=True)
+axes[0].barh(geo.index, geo["openings"], color=NEUTRAL)
+axes[0].set_title("Advertised openings by country (weighted)")
+axes[0].set_xlabel("Openings")
+
+axes[1].barh(geo.index, geo["salary_k"], color=NEUTRAL)
+axes[1].set_title("Mean salary by country (weighted)")
+axes[1].set_xlabel("Mean salary (k USD)")
+axes[1].bar_label(axes[1].containers[0], fmt="{:,.1f}", fontsize=8, padding=3)
+axes[1].set_xlim(0, 135)
+fig.savefig(FIGDIR / "fig07_geography.png")
+plt.close(fig)
+
+#Figure 8: Internal Inconsistencies
+rng = np.random.default_rng(0)
+sample = df.sample(2500, random_state=0)
+jitter = rng.uniform(-0.25, 0.25, len(sample))
+
+fig, axes = plt.subplots(1, 2, figsize=(9, 3.4))
+axes[0].scatter(sample["years_experience"] + jitter, sample["salary"] / 1000,
+                s=4, alpha=0.25, color=NEUTRAL, edgecolors="none")
+r = df["salary"].corr(df["years_experience"])
+axes[0].set_title(f"Years of experience vs salary (r = {r:.3f})")
+axes[0].set_xlabel("Years of experience")
+axes[0].set_ylabel("Salary (k USD)")
+
+sns.boxplot(data=df, x="experience_level", y="years_experience",
+            order=["Entry", "Mid", "Senior"], color=NEUTRAL,
+            linewidth=0.8, fliersize=1, ax=axes[1])
+axes[1].set_title("Years of experience by declared seniority")
+axes[1].set_xlabel("")
+axes[1].set_ylabel("Years of experience")
+axes[1].annotate("identical distributions:\ncolumns generated independently",
+                 xy=(0.30, 0.85), xycoords="axes fraction", fontsize=9, color=ACCENT)
+fig.savefig(FIGDIR / "fig08_inconsistencies.png")
+plt.close(fig)
