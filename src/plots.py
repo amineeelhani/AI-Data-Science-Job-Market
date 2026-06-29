@@ -83,3 +83,26 @@ axes[1].set_xlabel("Annual salary (k USD)")
 axes[1].set_ylabel("")
 fig.savefig(FIGDIR / "fig03_salary_distribution.png") 
 plt.close(fig)
+
+# Figure 4: Signal vs Noise
+drivers = {
+    "Job title": "job_title", "Experience level": "experience_level",
+    "Company size": "company_size", "Hiring urgency": "hiring_urgency",
+    "Country": "country", "Industry": "company_industry",
+    "Education level": "education_level", "Remote type": "remote_type",
+}
+rows = [{"driver": label,
+         "spread": (df.groupby(col, observed=True)["salary"].mean().max()
+                    - df.groupby(col, observed=True)["salary"].mean().min()) / 1000}
+        for label, col in drivers.items()]
+spread = pd.DataFrame(rows).sort_values("spread")
+
+fig, ax = plt.subplots(figsize=(7, 3.4))
+colors = [ACCENT if s > 5 else NEUTRAL for s in spread["spread"]]
+ax.barh(spread["driver"], spread["spread"], color=colors)
+ax.bar_label(ax.containers[0], fmt="{:,.1f}", fontsize=8, padding=3)
+ax.set_xlim(0, spread["spread"].max()*1.12)
+ax.set_title("Salary spread across the levels of each variable (k USD)")
+ax.set_xlabel("max(group mean) − min(group mean), k USD")
+fig.savefig(FIGDIR / "fig04_salary_drivers.png")
+plt.close(fig)
