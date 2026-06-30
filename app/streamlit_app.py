@@ -61,7 +61,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
      "Global landscape", "Success formula"]
 )
 
-#TAB 1
+#TAB 1: Market evolution
 with tab1:
     st.subheader("How the role mix evolves over time")
     st.info("How to read it: shares stay remarkably flat: no role overtakes another. "
@@ -88,3 +88,45 @@ with tab1:
     st.plotly_chart(fig, use_container_width=True)
 
 
+
+#TAB 2: Skills & salary
+with tab2:
+    st.subheader("Where the salary signal really is: skills and seniority")
+    st.info("How to read it: seniority is the strongest driver, advanced skills "
+            "(ML, Deep Learning, Cloud) add a real premium, while Python and SQL are "
+            "now baseline and barely move pay.")
+    skill_cols = {"skills_python": "Python", "skills_sql": "SQL", "skills_ml": "Machine Learning",
+                  "skills_deep_learning": "Deep Learning", "skills_cloud": "Cloud"}
+    levels = ["Entry", "Mid", "Senior"]
+
+    col_left, col_right = st.columns([1.2, 1])
+    with col_left:
+        st.markdown("**Mean salary by skill and seniority (k USD, weighted)**")
+        rows = []
+        for col, label in skill_cols.items():
+            for lvl in levels:
+                sub = fdf[(fdf[col] == 1) & (fdf["experience_level"] == lvl)]
+                rows.append({"skill": label, "level": lvl,
+                             "salary_k": round(wmean(sub) / 1000, 1) if len(sub) else None})
+        heat = pd.DataFrame(rows).pivot(index="skill", columns="level", values="salary_k")
+        heat = heat[levels]
+        fig_h = px.imshow(heat, text_auto=True, aspect="auto",
+                          color_continuous_scale="YlOrBr",
+                          labels={"color": "k USD"})
+        fig_h.update_layout(height=380)
+        st.plotly_chart(fig_h, use_container_width=True)
+    
+    with col_right:
+        st.markdown("**Salary premium per skill (k USD, weighted)**")
+        lift_rows = []
+        for col, label in skill_cols.items():
+            have = fdf[fdf[col] == 1]
+            miss = fdf[fdf[col] == 0]
+            if len(have) and len(miss):
+                lift_rows.append({"skill": label, "lift": (wmean(have) - wmean(miss)) / 1000})
+        lift = pd.DataFrame(lift_rows).sort_values("lift")
+        fig_l = px.bar(lift, x="lift", y="skill", orientation="h",
+                       labels={"lift": "has - lacks (k USD)", "skill": ""})
+        fig_l.update_traces(marker_color=["#7F7F7F" if v < 1 else "#D55E00" for v in lift["lift"]])
+        fig_l.update_layout(height=380)
+        st.plotly_chart(fig_l, use_container_width=True)
