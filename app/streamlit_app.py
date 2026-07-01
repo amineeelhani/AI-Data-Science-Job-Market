@@ -65,7 +65,7 @@ tab1, tab2, tab3, tab4 = st.tabs(
 with tab1:
     st.subheader("How the role mix evolves over time")
     st.info("How to read it: shares stay remarkably flat: no role overtakes another. "
-            "The market grows in volume, not in composition.")
+            "The market stays flat in both volume and composition.")
     
     mode = st.radio("Show as", ["Absolute openings", "Share (%)"],
                     horizontal=True, key="evo_mode")
